@@ -1,0 +1,81 @@
+version: '3.8'
+services:
+  nats-server:
+    image: nats:alpine3.21
+    command: ["-c", "/etc/nats/nats-server.conf"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./nats-server.conf:/etc/nats/nats-server.conf:ro
+    environment:
+      - NATS_TOKEN=${NATS_TOKEN}
+    healthcheck:
+      test: ["CMD", "nats-server", "--check"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - portfolio-network
+
+  # Client Gateway Service
+
+  client-gateway:
+    build: ./client-gateway
+    ports:
+      - "${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}"
+    volumes:
+      - ./client-gateway/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=${CLIENT_GATEWAY_PORT}
+      - NATS_SERVERS=${NATS_SERVERS}
+      - NATS_TOKEN=${NATS_TOKEN}
+      - TZ=${TZ}
+      - CORS_ENV=${CORS_ENV}
+      - CORS_ALLOW_DOMAINS=${CORS_ALLOW_DOMAINS}
+      - CORS_ALLOW_IPS=${CORS_ALLOW_IPS}
+      - HCAPTCHA_SECRET=${HCAPTCHA_SECRET}
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      nats-server:
+        condition: service_healthy
+    networks:
+      - portfolio-network
+    restart: always
+
+  # NodeMailer Micro-Service
+
+  nodemailer-micro-service:
+    build: ./nodeMailer-ms
+    volumes:
+      - ./nodeMailer-ms/src:/usr/src/app/src
+    command: npm run dev
+    environment:
+      - NATS_SERVERS=${NATS_SERVERS}
+      - NATS_TOKEN=${NATS_TOKEN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - OWNER_EMAIL=${OWNER_EMAIL}
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      client-gateway:
+        condition: service_healthy
+    networks:
+      - portfolio-network
+    restart: always
+networks:
+  portfolio-network:
+    driver: bridge
