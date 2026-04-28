@@ -1,11 +1,25 @@
 version: '3.8'
 services:
+
+  caddy:
+    image: caddy:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - client-gateway
+    networks:
+      - portfolio-network
+    restart: always
+
   nats-server:
     image: nats:alpine3.21
     command: ["-c", "/etc/nats/nats-server.conf"]
-    ports:
-      - "4222:4222"
-      - "8222:8222"
+    # no ports — NATS is internal only in production
     volumes:
       - ./nats-server.conf:/etc/nats/nats-server.conf:ro
       - ./certs:/certs:ro
@@ -18,17 +32,14 @@ services:
       retries: 5
     networks:
       - portfolio-network
-
-  # Client Gateway Service
+    restart: always
 
   client-gateway:
     build: ./client-gateway
-    ports:
-      - "${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}"
+    # no ports — Caddy routes traffic internally
     volumes:
-      - ./client-gateway/src:/usr/src/app/src
       - ./certs/ca.crt:/certs/ca.crt:ro
-    command: npm run start:dev
+    command: npm run start:prod
     environment:
       - PORT=${CLIENT_GATEWAY_PORT}
       - NATS_SERVERS=${NATS_SERVERS}
@@ -52,14 +63,11 @@ services:
       - portfolio-network
     restart: always
 
-  # NodeMailer Micro-Service
-
   nodemailer-micro-service:
     build: ./nodeMailer-ms
     volumes:
-      - ./nodeMailer-ms/src:/usr/src/app/src
       - ./certs/ca.crt:/certs/ca.crt:ro
-    command: npm run dev
+    command: npm run start        # adjust to your prod script
     environment:
       - NATS_SERVERS=${NATS_SERVERS}
       - NATS_TOKEN=${NATS_TOKEN}
@@ -81,6 +89,11 @@ services:
     networks:
       - portfolio-network
     restart: always
+
+volumes:
+  caddy_data:
+  caddy_config:
+
 networks:
   portfolio-network:
     driver: bridge

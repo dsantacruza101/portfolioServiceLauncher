@@ -5,3 +5,8 @@ build/
 logs/
 *.log
 .env
+
+# TLS certificates — keep private keys out of version control
+certs/*.key
+certs/*.crt
+certs/*.srl
