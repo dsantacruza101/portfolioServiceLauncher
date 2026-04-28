@@ -1,0 +1,6 @@
+[submodule "client-gateway"]
+	path = client-gateway
+	url = https://github.com/dsantacruza101/dsantacruz-client-gateway.git
+[submodule "nodeMailer-ms"]
+	path = nodeMailer-ms
+	url = https://github.com/dsantacruza101/NodeMailer_MicroService.git
