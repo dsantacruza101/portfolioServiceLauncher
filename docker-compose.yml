@@ -37,7 +37,6 @@ services:
       - TZ=${TZ}
       - CORS_ENV=${CORS_ENV}
       - CORS_ALLOW_DOMAINS=${CORS_ALLOW_DOMAINS}
-      - CORS_ALLOW_IPS=${CORS_ALLOW_IPS}
       - HCAPTCHA_SECRET=${HCAPTCHA_SECRET}
     healthcheck:
       test: ["CMD", "node", "--version"]

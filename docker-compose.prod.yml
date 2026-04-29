@@ -35,11 +35,12 @@ services:
     restart: always
 
   client-gateway:
-    build: ./client-gateway
-    # no ports — Caddy routes traffic internally
+    build:
+      context: ./client-gateway
+      dockerfile: dockerfile.prod
+    image: client-gateway-prod
     volumes:
       - ./certs/ca.crt:/certs/ca.crt:ro
-    command: npm run start:prod
     environment:
       - PORT=${CLIENT_GATEWAY_PORT}
       - NATS_SERVERS=${NATS_SERVERS}
@@ -48,7 +49,6 @@ services:
       - TZ=${TZ}
       - CORS_ENV=${CORS_ENV}
       - CORS_ALLOW_DOMAINS=${CORS_ALLOW_DOMAINS}
-      - CORS_ALLOW_IPS=${CORS_ALLOW_IPS}
       - HCAPTCHA_SECRET=${HCAPTCHA_SECRET}
     healthcheck:
       test: ["CMD", "node", "--version"]
@@ -64,10 +64,12 @@ services:
     restart: always
 
   nodemailer-micro-service:
-    build: ./nodeMailer-ms
+    build:
+      context: ./nodeMailer-ms
+      dockerfile: dockerfile.prod
+    image: nodemailer-micro-service-prod
     volumes:
       - ./certs/ca.crt:/certs/ca.crt:ro
-    command: npm run start        # adjust to your prod script
     environment:
       - NATS_SERVERS=${NATS_SERVERS}
       - NATS_TOKEN=${NATS_TOKEN}
@@ -84,7 +86,7 @@ services:
       retries: 3
       start_period: 40s
     depends_on:
-      client-gateway:
+      nats-server:
         condition: service_healthy
     networks:
       - portfolio-network
