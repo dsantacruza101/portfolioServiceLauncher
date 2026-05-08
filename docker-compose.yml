@@ -68,6 +68,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - OWNER_EMAIL=${OWNER_EMAIL}
+      - MAIL_FROM=${MAIL_FROM}
     healthcheck:
       test: ["CMD", "node", "--version"]
       interval: 30s
