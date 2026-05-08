@@ -5,6 +5,7 @@ build/
 logs/
 *.log
 .env
+.claude/
 
 # TLS certificates — keep private keys out of version control
 certs/*.key
